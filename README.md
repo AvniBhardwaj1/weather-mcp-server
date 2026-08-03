@@ -1,128 +1,166 @@
 # Weather MCP Server
 
-A small, well-documented MCP-style wrapper around a weather API (OpenWeatherMap). This is a fun learning project that demonstrates how to:
+A clean, readable learning project that wraps OpenWeatherMap into a small MCP-style server. It exposes friendly endpoints for current weather and daily forecasts, normalizes provider output, and includes a demo browser UI.
 
-- Integrate with a third-party REST API
-- Normalize provider responses into a stable contract
-- Expose simple MCP-style REST endpoints for current conditions and daily forecasts
-- Build a tiny static UI to explore the endpoints
-- Add a basic in-memory cache and request validation to make the service more robust
+## Why this exists
 
-This repository is intended for learning and prototyping (not production). It is deliberately small and easy to read so you can extend it as an exercise.
+Many weather APIs return complex or inconsistent responses. This project makes it easy to:
 
-Quick summary: what it does
-- Accepts location queries (city name or lat/lon) and returns structured weather data.
-- Two endpoints:
-  - GET /mcp/current?city=NAME  OR /mcp/current?lat=..&lon=..
-  - GET /mcp/forecast?days=N&city=NAME  OR /mcp/forecast?lat=..&lon=..
-- Optional: append `&raw=true` to include the underlying provider's raw payload(s) in the response.
-- In-memory TTL caching reduces redundant calls to the provider during development.
+- query weather by city name or coordinates,
+- get a standardized JSON response for current conditions,
+- get a simplified daily forecast summary,
+- optionally include raw provider payloads for debugging,
+- cache results so repeated requests are faster.
 
-Why this project is useful (learning topics)
-- REST API integration (axios, query params)
-- Data normalization and designing a simple consistent contract
-- Input validation and error handling
-- Lightweight caching strategies (TTL cache)
-- Static web UI that consumes the API (vanilla JS)
-- Environment configuration via .env and dotenv
-- Basic project structuring for a small service
+It is built as a learning exercise for REST integration, data normalization, and service design.
 
-Architecture & file map (what file contains what)
-- public/
-  - index.html — demo UI to call the MCP endpoints. Includes controls for city/coords, days, and raw toggle.
-  - app.js — client-side JS used by the demo UI.
-- src/
-  - server.js — Express server exposing the MCP endpoints, performing validation, and using the cache.
-  - weather.js — integration module that calls OpenWeatherMap (geocoding, current, forecast) and normalizes results.
-    - Uses the free 5-day / 3-hour forecast endpoint and aggregates entries into daily objects.
-  - cache.js — tiny in-memory TTL cache used by the server (suitable for demos). Uses Redis if REDIS_URL is provided.
-  - logger.js — tiny winston logger wrapper
-- package.json — project metadata and scripts (start, dev, test)
-- .env (not committed) — put your OPENWEATHER_API_KEY here.
-- README.md — (this file) usage and explanation
+## What is MCP here?
 
-Data contract (summary)
-- Current conditions (example shape):
-  {
-    provider: 'openweathermap',
-    fetchedAt: '2026-08-03T10:00:00Z',
-    location: { name: 'London, England, GB', lat: 51.5074, lon: -0.1278 },
-    current: {
-      temp_k, temp_c, temp_f,
-      feels_like_c, humidity, pressure_hpa, wind_mps, wind_deg,
-      conditions: [{ id, main, description }]
-    }
-    // Use ?raw=true to include current.raw with the provider payload
-  }
-- Forecast (example shape):
-  {
-    provider: 'openweathermap',
-    fetchedAt: '2026-08-03T10:00:00Z',
-    location: { lat, lon, name? },
-    forecast: [
-      { dt_iso, temp_k: {min,max}, temp_c: {min,max}, temp_f: {min,max}, humidity, wind_mps, conditions, pop }
-    ]
-    // Use ?raw=true to include forecast.raw and per-day raw arrays
-  }
+“MCP” stands for Minimal Common Platform in this context. The goal is to provide a tiny wrapper layer that:
 
-Getting started (run locally)
-1. Clone or download the repository to your machine.
+- hides provider-specific API details,
+- offers a stable contract to clients,
+- handles validation and error responses uniformly,
+- keeps the implementation simple and transparent.
 
-2. Install Node.js (includes npm). On macOS, Homebrew:
-   brew install node
+This server is not a full real-world platform; it is a small, usable sample service for education and experimentation.
 
-3. Install dependencies (from project root):
-   npm install
+## What this project solves
 
-4. Create a .env file in the project root with your OpenWeatherMap API key (no quotes):
-   OPENWEATHER_API_KEY=your_api_key_here
+This project solves the problem of consuming raw weather API responses directly in a client or another service. It:
 
-5. Start the server (dev mode with auto-reload):
-   npm run dev
+- abstracts OpenWeatherMap endpoint details,
+- normalizes temperature and weather condition fields,
+- aggregates 3-hour forecast data into daily summaries,
+- adds caching and validation,
+- provides a tiny demo UI so you can try the API instantly.
 
-6. (Optional) Run unit tests (uses Jest + Supertest):
-   npm test
+## Features
 
-7. Open the demo UI in your browser:
-   http://localhost:3000/
+- GET `/mcp/current?city=London`
+- GET `/mcp/forecast?days=3&city=London`
+- optional `?raw=true` to include raw provider data
+- city name or latitude/longitude input
+- in-memory TTL cache
+- optional Redis cache when `REDIS_URL` is set
+- friendly JSON error responses
+- minimal static UI at `/`
+- basic automated tests with Jest + Supertest
 
-8. Example API calls (use curl or your browser):
-   - Current by city:
-     curl "http://localhost:3000/mcp/current?city=London"
-   - Forecast (3 days) by city:
-     curl "http://localhost:3000/mcp/forecast?days=3&city=London"
-   - Include raw provider payloads (can be large):
-     curl "http://localhost:3000/mcp/forecast?days=3&city=London&raw=true"
+## API Reference
 
-Notes about .env and API keys
-- Do NOT commit your .env or API key. The repository includes a .gitignore that ignores .env.
-- The free OpenWeatherMap tier may restrict access to some endpoints (One Call). This project uses the free 5-day forecast and current weather endpoints and normalizes results.
+### GET /mcp/current
 
-Caching & robustness
-- The server uses a simple in-memory TTL cache (src/cache.js). TTL defaults to 300 seconds and can be configured with the environment variable `CACHE_TTL_SECONDS`.
-- If REDIS_URL is provided, the cache will use Redis via ioredis.
-- Input validation ensures lat/lon are in valid ranges and days are clamped (1–5 for the forecast aggregation).
-- Error responses are JSON with an `error` field and sometimes a `details` message.
+Parameters:
 
-Extending this project (ideas / next steps)
-- Add authentication and rate-limiting
-- Add CI and tests that mock axios
-- Add provider abstraction to support multiple weather providers
-- Add more fields to the contract (hourly forecasts, precipitation types)
+- `city` (string) OR
+- `lat` and `lon` (numbers)
+- `raw=true` (optional)
 
-Pushing to GitHub (quick guide)
-1. Initialize a local git repo and commit:
-   git init
-   git add .
-   git commit -m "Initial Weather MCP server scaffold"
+Returns current weather normalized to:
 
-2. Push to GitHub (if you created the repo on GitHub already):
-   git branch -M main
-   git remote add origin <your-remote-url>
-   git push -u origin main
+- temperature in Kelvin, Celsius, Fahrenheit
+- feels-like temperature
+- humidity
+- pressure
+- wind speed and direction
+- simple weather conditions array
 
-License & safety
-- This is a demo/learning project. Add an appropriate license if you plan to publish it.
+### GET /mcp/forecast
 
-Contact / origin
-- Scaffolding and updates were provided by an AI assistant using Copilot CLI runtime in VS Code. Use and modify this project freely for learning and experimentation.
+Parameters:
+
+- `city` (string) OR
+- `lat` and `lon` (numbers)
+- `days` (1–5, optional, default 3)
+- `raw=true` (optional)
+
+The forecast response uses OpenWeatherMap's free 5-day / 3-hour endpoint and groups results into daily summaries with:
+
+- min/max temperatures,
+- average humidity,
+- max wind speed,
+- most frequent weather condition,
+- precipitation probability.
+
+### GET /health
+
+Returns a simple health check JSON object.
+
+## Project structure
+
+- `src/server.js` — Express server, request validation, cache integration, endpoints
+- `src/weather.js` — OpenWeatherMap integration and data normalization
+- `src/cache.js` — in-memory TTL cache plus optional Redis support
+- `src/logger.js` — simple logging with winston
+- `public/index.html` — small demo UI page
+- `public/app.js` — UI fetch helpers for current and forecast
+- `__tests__/server.test.js` — basic test coverage for endpoints
+- `README.md` — this file
+
+## Setup
+
+1. Install Node.js 18+ and npm.
+2. In the project root, install dependencies:
+
+```bash
+npm install
+```
+
+3. Create a `.env` file in the project root with:
+
+```text
+OPENWEATHER_API_KEY=your_api_key_here
+```
+
+4. Start the server:
+
+```bash
+npm run dev
+```
+
+5. Open the demo UI:
+
+```text
+http://localhost:3000
+```
+
+## Example usage
+
+Current weather by city:
+
+```bash
+curl "http://localhost:3000/mcp/current?city=London"
+```
+
+3-day forecast by city:
+
+```bash
+curl "http://localhost:3000/mcp/forecast?days=3&city=London"
+```
+
+Include raw provider data:
+
+```bash
+curl "http://localhost:3000/mcp/forecast?days=3&city=London&raw=true"
+```
+
+## What you learn from this project
+
+- integrating with third-party REST APIs
+- designing a stable output contract for clients
+- normalizing and summarizing complex provider data
+- building a small Express service with validation
+- caching results for performance
+- serving a static UI from the same app
+- writing simple endpoint tests
+
+## Notes
+
+- Keep your `.env` file secret and do not commit it.
+- This project is meant for learning and prototyping, not production use.
+- The free OpenWeatherMap tier may restrict some endpoints, so this project uses the free current weather and forecast APIs.
+
+## License
+
+MIT
