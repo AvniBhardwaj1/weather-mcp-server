@@ -51,7 +51,7 @@ async function getCurrentByCoords(lat, lon, includeRaw = false) {
   return out;
 }
 
-async function getForecastByCoords(lat, lon, days = 3) {
+async function getForecastByCoords(lat, lon, days = 3, includeRaw = false) {
   // Use the free 5 day / 3 hour forecast endpoint and aggregate entries into daily summaries.
   // Many free OpenWeather accounts cannot access the One Call daily endpoint (401). The /forecast endpoint
   // returns a list of 3-hour forecasts which we group by date and compute min/max temps and common conditions.

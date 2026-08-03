@@ -63,7 +63,7 @@ app.get('/mcp/current', async (req, res) => {
     await cache.set(cacheKey, current, DEFAULT_TTL);
     res.json(current);
   } catch (err) {
-    console.error(err?.response?.data || err.message || err);
+    logger.error('Error in /mcp/current: %o', err?.response?.data || err.message || err);
     res.status(500).json({ error: 'server_error', details: err?.message || 'unknown' });
   }
 });
@@ -102,7 +102,7 @@ app.get('/mcp/forecast', async (req, res) => {
     await cache.set(cacheKey, forecast, DEFAULT_TTL);
     res.json(forecast);
   } catch (err) {
-    console.error(err?.response?.data || err.message || err);
+    logger.error('Error in /mcp/forecast: %o', err?.response?.data || err.message || err);
     res.status(500).json({ error: 'server_error', details: err?.message || 'unknown' });
   }
 });

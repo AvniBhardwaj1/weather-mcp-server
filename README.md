@@ -35,8 +35,9 @@ Architecture & file map (what file contains what)
   - server.js — Express server exposing the MCP endpoints, performing validation, and using the cache.
   - weather.js — integration module that calls OpenWeatherMap (geocoding, current, forecast) and normalizes results.
     - Uses the free 5-day / 3-hour forecast endpoint and aggregates entries into daily objects.
-  - cache.js — tiny in-memory TTL cache used by the server (suitable for demos).
-- package.json — project metadata and scripts (start, dev)
+  - cache.js — tiny in-memory TTL cache used by the server (suitable for demos). Uses Redis if REDIS_URL is provided.
+  - logger.js — tiny winston logger wrapper
+- package.json — project metadata and scripts (start, dev, test)
 - .env (not committed) — put your OPENWEATHER_API_KEY here.
 - README.md — (this file) usage and explanation
 
@@ -99,14 +100,14 @@ Notes about .env and API keys
 
 Caching & robustness
 - The server uses a simple in-memory TTL cache (src/cache.js). TTL defaults to 300 seconds and can be configured with the environment variable `CACHE_TTL_SECONDS`.
+- If REDIS_URL is provided, the cache will use Redis via ioredis.
 - Input validation ensures lat/lon are in valid ranges and days are clamped (1–5 for the forecast aggregation).
 - Error responses are JSON with an `error` field and sometimes a `details` message.
 
 Extending this project (ideas / next steps)
-- Add Redis-backed caching for multi-instance usage
 - Add authentication and rate-limiting
-- Add unit tests and CI (mock axios responses)
-- Add provider abstraction to support multiple weather providers (e.g., Weatherbit, Meteostat)
+- Add CI and tests that mock axios
+- Add provider abstraction to support multiple weather providers
 - Add more fields to the contract (hourly forecasts, precipitation types)
 
 Pushing to GitHub (quick guide)
@@ -115,26 +116,13 @@ Pushing to GitHub (quick guide)
    git add .
    git commit -m "Initial Weather MCP server scaffold"
 
-2. Create a remote repository on GitHub (via the website or the gh CLI):
-   gh repo create my-weather-mcp --public --source=. --remote=origin
-   (or create the repo on github.com and copy the remote URL)
-
-3. Push to GitHub:
+2. Push to GitHub (if you created the repo on GitHub already):
    git branch -M main
    git remote add origin <your-remote-url>
    git push -u origin main
-
-If you want, I can create a GitHub repo for you (I will need repo name and whether it should be public or private) — tell me the name and preference and I'll create it and push the files.
 
 License & safety
 - This is a demo/learning project. Add an appropriate license if you plan to publish it.
 
 Contact / origin
 - Scaffolding and updates were provided by an AI assistant using Copilot CLI runtime in VS Code. Use and modify this project freely for learning and experimentation.
-
-Enjoy — try adding caching, tests, or provider adapters as practice. If you'd like, I can now:
-- Add unit tests and a simple test runner
-- Create a GitHub repo and push the project (ask me to proceed and provide repo visibility and name)
-- Add Redis caching instead of in-memory cache
-
-What would you like to do next?
