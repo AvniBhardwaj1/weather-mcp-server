@@ -1,0 +1,26 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Weather MCP Server Demo</title>
+  <style>
+    body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, 'Helvetica Neue', Arial; padding: 2rem; }
+    input, select { margin-right: .5rem }
+    pre { background: #f7f7f8; padding: 1rem; border-radius: 6px; max-height: 60vh; overflow: auto }
+  </style>
+</head>
+<body>
+  <h1>Weather MCP Server — Demo UI</h1>
+  <p>Enter a city (e.g., London) and choose actions.</p>
+  <div>
+    <label>City: <input id="city" value="London"></label>
+    <label>Days: <select id="days"><option>1</option><option selected>3</option><option>5</option></select></label>
+    <label><input type="checkbox" id="raw"> Include provider raw payload (optional)</label>
+    <button onclick="fetchCurrent()">Get Current</button>
+    <button onclick="fetchForecast()">Get Forecast</button>
+  </div>
+  <h2>Result</h2>
+  <pre id="result">No result yet</pre>
+  <script src="/app.js"></script>
+</body>
+</html>
